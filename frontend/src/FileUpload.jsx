@@ -5,6 +5,7 @@ const FileUpload = () => {
   const [file, setFile] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleUpload = async () => {
     if (!file) {
@@ -16,20 +17,38 @@ const FileUpload = () => {
     formData.append("file", file);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/files/upload", formData);
-      setImageUrl(res.data.url);
+      setLoading(true);
       setError("");
-    } catch (error) {
-      setError("Upload failed. Try again.");
+      setImageUrl("");
+
+      const res = await axios.post("http://localhost:5000/api/files/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", 
+        },
+      });
+
+      setImageUrl(res.data.url);
+    } catch (err) {
+      console.error(err);
+      setError("Upload failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div>
+    <div style={{ textAlign: "center", padding: "2rem" }}>
       <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-      <button onClick={handleUpload}>Upload</button>
+      <button onClick={handleUpload} disabled={loading}>
+        {loading ? "Uploading..." : "Upload"}
+      </button>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      {imageUrl && <img src={imageUrl} alt="Uploaded file" />}
+      {imageUrl && (
+        <div>
+          <p>Image uploaded successfully:</p>
+          <img src={imageUrl} alt="Uploaded file" style={{ maxWidth: "300px", marginTop: "1rem" }} />
+        </div>
+      )}
     </div>
   );
 };
